@@ -1,0 +1,46 @@
+The bazFS File System - A simplified FAT16
+
+- Sectors = Clusters = Blocks
+- Block size is 512 Bytes
+- FAT table entries are 16 bits
+- Only one FAT table
+- First data block contains Directory Entries for root dir "/"
+
+Block 0: Boot Block
+2B 	- Block Size
+4B 	- Num Blocks on this logical partition
+2B 	- Num Blocks per FAT table (N_fat)
+8B 	- Name for this partition
+16B	- Unused
+380B	- Boot code
+
+Block 1 to N_fat: FAT table blocks
+- Each 2B entry is either:
+    0x0000 = Block is free
+    0xFFFF = Block is not available
+    0xFFFE = Last block of respective block chain
+    0x0001 - 0xFFFD = index of next block in chain
+
+Block N_fat + 1 to ...: Data blocks
+- Each data block contains either:
+  - Directory Entries (DEs) or
+  - File data
+- DEs are 32 Bytes each (16 DEs per block)
+
+Directory Entry:
+11B 	- Name*
+3B	- Extension
+2B	- Index of first entry in FAT Table
+4B	- Size in Bytes
+12B	- Reserved/Unused
+
+*First Byte in Name indicates if DE is free:
+0xF0 = Free
+0x00 = Free + all following DEs in this directory are free
+
+
+Note:
+- First data block contains DEs for root dir "/"
+- Every dir contains a DE for directory:
+  - "." the current dir
+  - ".." the parent dir (except root dir which has no parent)

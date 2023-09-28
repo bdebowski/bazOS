@@ -1,0 +1,17 @@
+System Calls:
+- User code will place address of system call into a specific location, as well the arguments
+- User code will then call a given Trap function to start a system call
+- System code in Trap function will then verify that this is a valid system call address, then load the arguments into registers as needed and call the system subroutine
+- Subroutine returns, then Trap exception returns control to user code
+
+Multi-Tasking:
+- Scheduler will use auto-timed interrupts as callbacks to perform a context switch
+- This looks something like:
+  - System passes control to user code.  User code is running.
+  - User code interrupted by auto-timer interrupt.
+  - Interrupt handler uses Scheduler to:
+    - save user code state/context (PC, Registers, SP, SR)
+    - put the process to bottom of Scheduler queue
+    - select next user code process to run (top of Scheduler queue)
+    - load that processes context and set the PC on the stack accordingly
+  - ISR returns from exception and now the new user code process is running
