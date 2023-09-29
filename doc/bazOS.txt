@@ -1,22 +1,74 @@
+=============
+The Kernel:
+=============
+- Assembled relative to address 0000, then loaded into supervisor part of memory as one contiguous block
+- A6 = address where Kernel was loaded (base address)
+- All labels/symbols used relative to A6 (e.g. JMP   START(A6) )
+
+
+===============
 System Calls:
-- User code will place address of system call into a specific location, as well the arguments
-- User code will then call a given Trap function to start a system call
-- System code in Trap function will then verify that this is a valid system call address, then load the arguments into registers as needed and call the system subroutine
+===============
+- User code will place index of system call into D1.W where the indices are named in a file using EQU statements
+- User code will then call Trap0 to start a system call
+- System code in Trap function will then verify that this is a valid system call index, then index into a jump table to get the system subroutine address, then jump to that subroutine
 - Subroutine returns, then Trap exception returns control to user code
 
+SYS.X68 (included by user programs that perform system calls):
+  * Document params for SYS_OPEN
+  SYS_OPEN     EQU  0
+  * Document params for SYS_CLOSE
+  SYS_CLOSE    EQU  4
+  * Document params for SYS_MALLOC
+  SYS_MALLOC   EQU  8
+  ...
+
+SYSCALLS.X68 (included by KERNEL.X68):
+  SYSCALLS_OPEN    ; open file subroutine
+    ...
+    RTS
+  SYSCALLS_CLOSE   ; close file subroutine
+    ...
+    RTS
+  SYSCALLS_TABLE
+    DC.L  SYSCALLS_OPEN
+    DC.L  SYSCALLS_CLOSE
+    DC.L  SYSCALLS_MALLOC
+  SYSCALLS_HANDLER ; handler for Trap #0 (system call)
+    * D1.W = index into SYSCALLS_TABLE given by symbols defined in SYS.X68
+    * Verify D1 contains value in valid range (Min, Max)
+    JSR   SYSCALLS_TABLE(A6,D1.W)   ; A6 = base address of Kernel code
+    RTE
+
+USERCODE.X68:
+  INCLUDE   "SYS.X68"
+  ...
+  MOVE.W  #SYS_OPEN,D1
+  LEA     FILEPATH,A1
+  TRAP    #0             ; will execute SYSCALLS_OPEN subroutine in supervisor state
+
+
+=================
 Multi-Tasking:
+=================
 - Scheduler will use auto-timed interrupts as callbacks to perform a context switch
 - This looks something like:
+  - System starts an auto-timed interrupt level N
   - System passes control to user code.  User code is running.
-  - User code interrupted by auto-timer interrupt.
+  - User code interrupted by interrupt level N
   - Interrupt handler uses Scheduler to:
     - save user code state/context (PC, Registers, SP, SR)
     - put the process to bottom of Scheduler queue
     - select next user code process to run (top of Scheduler queue)
     - load that processes context and set the PC on the stack accordingly
   - ISR returns from exception and now the new user code process is running
+- Kernel processes also run on interrupt timers
+  - i.e. every N ms ISR7 triggers and any critical kernel code that needs to run gets run
 
+
+====================
 Memory Management:
+====================
 - Kernel sits in protected system memory space
 - User programs get loaded into user memory space
 - MemoryManager assigns the user process an address space of contiguous memory

@@ -47,6 +47,12 @@ CPSTRT  INCLUDE "emulatedhd.X68"    ; EmulatedHD driver code
 
 *-----------------------------------------------------------
 * Define the Boot Sequence
+*
+* NOTE: This will change.  In the future, we will just initialize
+* the HD here, then copy the kernel code from the HD into memory
+* and pass control to the kernel.  The kernel code will be
+* assembled relative to address 0000 and A6 will be set the base
+* address where the kernel was copied.
 *-----------------------------------------------------------
         * Initialize HD0
 BTSEQ   MOVE.L  DVCTBL+KMSTRT-CPSTRT,A1
@@ -117,6 +123,7 @@ BTSTRP  LEA     KMEND+1,SP  ; If we don't start from a reset we need to set the 
 *-----------------------------------------------------------
  
         END     BTSTRP
+
 
 
 
