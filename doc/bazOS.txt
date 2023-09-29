@@ -15,3 +15,27 @@ Multi-Tasking:
     - select next user code process to run (top of Scheduler queue)
     - load that processes context and set the PC on the stack accordingly
   - ISR returns from exception and now the new user code process is running
+
+Memory Management:
+- Kernel sits in protected system memory space
+- User programs get loaded into user memory space
+- MemoryManager assigns the user process an address space of contiguous memory
+- A7 (the SP) is set to the top of that address space
+- A6 is reserved for the base memory address of the program (bottom of the assigned address space)
+- This means we write all programs to conform to the following requirements:
+  - Every program is written to start at address 0x000000
+  - Write programs such that empty space is avoided (i.e. we dont ORG to $2000 to declare data there when our instructions are at $0000)
+  - All absolute addresses (i.e. labels/symbols) are referenced relative to A6 when used (e.g. MOVE.W  LABEL(A6),D1 instead of MOVE.W  LABEL,D1)
+- Heap Memory:
+  - MemoryManager will keep track of Heap memory for each process
+  - i.e. a pointer to next free slot on the Heap, that gets incremented when memory is allocated
+  - Requires pointers to pointers:
+    STRUCT1   DS.L   1     ; STRUCT1 is a memory address to a location that stores a memory address
+    STRUCT2   DS.L   2     ; STRUCT2 is a memory address to a location that stores a memory address
+    ...
+    * Dynamically allocate 512 Bytes of storage for STRUCT1
+    LEA       STRUCT1,A1
+    MOVE.L    #512,D1
+    BSR       MALLOC       ; System will allocate 512 Bytes of space on the heap and the value at STRUCT1 will be the starting memory address of the allocated block
+  - Assuming a fixed max size for the process stack memory, the MemoryManager will recognize when there is not enough space left in the process's assiged address space to allocate N Bytes on the Heap.  In this case the process will be moved (allocated) to a new, larger space in memory.
+- Since processes must be assigned to contiguous blocks of memory we will likely have to repack processes in the memory space at times.
