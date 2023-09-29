@@ -1,14 +1,16 @@
 The bazDS Drive System Specification
 
-Drive is subdivided into 512B size blocks.
-Block 0 contains the drive size and the Partition Table.
+Drive is subdivided into N equal size blocks.
+Block 0 contains the block size, drive size (in blocks), and the Partition Table.
 
+Block 0:
 Byte	Meaning
-0-3 	- Size of drive in Bytes
-4-511 	- Size of partitions 0 - 126 in Bytes (each entry is 4B long)
-512-N 	- bazFS partitions
+0-3 	- Z = Size of each block in Bytes
+4-7	- N = Size of drive in blocks (including block 0)
+8-(Z-1)	- Partition Table
+	  - Each entry is 4 Bytes long and indicates the number of blocks assigned to that partition
 
 Notes:
 - Partition 0 must be the boot/primary partition
 - Partitions are packed one after another.  Therefore a partition size of 0 indicates that all following partitions are also 0 in size.
-- Partition size of 0 indicates no partition.
+- Partition size of 0 indicates no partition exists.

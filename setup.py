@@ -9,8 +9,10 @@ SIZE = 8*1024*1024
 
 
 def write_drive_file(filepath, size, block_size=512):
+    assert size % block_size == 0, "Drive size must be exact multiple of block size"
+    num_blocks = size // block_size
     with open(filepath, 'wb') as fp:
-        block_zero_as_string = "{:08x}".format(size) + "00"*(block_size-4)
+        block_zero_as_string = "{:08x}{:08x}".format(block_size, num_blocks) + "00" * (block_size - 8)
         rest_of_drive = "FF" * (size - block_size)
         fp.write(bytes.fromhex(block_zero_as_string + rest_of_drive))
 
