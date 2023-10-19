@@ -71,20 +71,16 @@ _DRIVETOOLS_003
 
 
 *-----------------------------------------------------------
-* Create a logical partition and format it to bazFS format.
-* p1.L - Address of null terminated string specifying drive
-*   file name/path.
-* p2.L - Address of 8 Byte (8 characters) long name for the
-*   logical partition.
-* p3.L - Desired size for the partition in Bytes.
-* p4.W - Return value:
-*   0 = Success
-*   1 = Error
+* Return the block size in Bytes and the partition size in
+* blocks.
+*
+* A1.L - Memory mapped address of the drive.
+* D1.W - Index of partition to get info for.
+* A0.W - Returns the block size in Bytes.
+* D0.W - Returns the partition size in blocks.
 *-----------------------------------------------------------
-DRIVETOOLS_FORMAT
-* Open the disk file
-* Determine the disk file size
-        RTS
+DRIVETOOLS_PARTITION_INFO
+    RTS
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
